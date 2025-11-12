@@ -1,9 +1,8 @@
-package org.npeonelove.backend.model;
+package org.npeonelove.backend.model.User;
 
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CurrentTimestamp;
-import org.hibernate.annotations.Type;
 
 import java.time.LocalDateTime;
 

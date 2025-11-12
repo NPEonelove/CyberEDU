@@ -2,7 +2,7 @@ package org.npeonelove.backend.dto.user;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.npeonelove.backend.model.UserMode;
+import org.npeonelove.backend.model.User.UserMode;
 
 @Getter
 @Setter

@@ -1,14 +1,13 @@
 package org.npeonelove.backend.service;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.io.filefilter.SymbolicLinkFileFilter;
 import org.modelmapper.ModelMapper;
 import org.npeonelove.backend.dto.user.GetJwtUserClaimsResponseDTO;
 import org.npeonelove.backend.dto.user.GetUserResponseDTO;
 import org.npeonelove.backend.dto.user.UpdateUserRequestDTO;
 import org.npeonelove.backend.dto.user.UpdateUserResponseDTO;
 import org.npeonelove.backend.exception.user.UserNotFoundException;
-import org.npeonelove.backend.model.User;
+import org.npeonelove.backend.model.User.User;
 import org.npeonelove.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
