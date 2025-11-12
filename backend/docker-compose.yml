@@ -1,40 +1,40 @@
 version: "3.9"
 
 services:
-  cyberEdu_db:
+  cyberedu_db:
     image: postgres
-    container_name: cyberEdu_db
+    container_name: cyberedu_db
     environment:
       POSTGRES_DB: "cyberEdu"
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "1"
     networks:
-      - cyberEdu-network
+      - cyberedu-network
     ports:
       - "5456:5432"
     volumes:
-      - postgres-cyberEdu-data:/var/lib/postgresql/data
+      - postgres-cyberedu-data:/var/lib/postgresql/data
 
-#  cyberEdu-backend:
-#    build:
-#      context: .
-#    container_name: CyberEdu-backend
-#    environment:
-#      SERVER_PORT: 8080
-#      JWT_SECRET_KEY: "s7k5n2x9r1v6y8w4z7u5i3o9l2p5n0x3r1v6y8w4z7u5i3o9l2p5n0x3"
-#      SPRING_DATASOURCE_URL: "jdbc:postgresql://cyberEdu_db:5432/cyberEdu"
-#      SPRING_DATASOURCE_USERNAME: "postgres"
-#      SPRING_DATASOURCE_PASSWORD: "1"
-#    ports:
-#      - "8080:8080"
-#    depends_on:
-#      - cyberEdu_db
-#    networks:
-#      - cyberEdu-network
+  cyberedu-backend:
+    build:
+      context: .
+    container_name: cyberedu-backend
+    environment:
+      SERVER_PORT: 8080
+      JWT_SECRET_KEY: "s7k5n2x9r1v6y8w4z7u5i3o9l2p5n0x3r1v6y8w4z7u5i3o9l2p5n0x3"
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://cyberedu_db:5432/cyberEdu"
+      SPRING_DATASOURCE_USERNAME: "postgres"
+      SPRING_DATASOURCE_PASSWORD: "1"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - cyberedu_db
+    networks:
+      - cyberedu-network
 
 networks:
-  cyberEdu-network:
+  cyberedu-network:
     driver: bridge
 
 volumes:
-  postgres-cyberEdu-data:
+  postgres-cyberedu-data:

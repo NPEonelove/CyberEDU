@@ -34,11 +34,12 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/swagger-resources",
                                 "/webjars/**",
-                                "/api/v1/auth/exchange"
+                                "/api/v1/auth/sign-up",
+                                "/api/v1/auth/sign-in",
+                                "/api/v1/auth/sign-in",
+                                "/api/v1/auth/refresh-access-token"
                         ).permitAll()
-                        .requestMatchers("/api/v1/auth/change-password",
-                                "/api/v1/auth/sign-out").authenticated()
-                        .anyRequest().permitAll())
+                        .anyRequest().authenticated())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
