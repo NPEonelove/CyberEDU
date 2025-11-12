@@ -1,5 +1,5 @@
 databaseChangeLog:
   - include:
       file: db/changelog/versions/user/01-create_users_table.sql
-  - include:
-      file: db/changelog/versions/scenario/01-create_scenarios_table.sql
+#  - include:
+#      file: db/changelog/versions/scenario/01-create_scenarios_table.sql
