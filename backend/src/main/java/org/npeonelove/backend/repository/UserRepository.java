@@ -1,6 +1,6 @@
 package org.npeonelove.backend.repository;
 
-import org.npeonelove.backend.model.User.User;
+import org.npeonelove.backend.model.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,6 +1,6 @@
 package org.npeonelove.backend.repository;
 
-import org.npeonelove.backend.model.Scenario.Scenario;
+import org.npeonelove.backend.model.scenario.Scenario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

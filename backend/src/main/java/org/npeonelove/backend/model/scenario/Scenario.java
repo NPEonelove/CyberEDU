@@ -1,4 +1,4 @@
-package org.npeonelove.backend.model.Scenario;
+package org.npeonelove.backend.model.scenario;
 
 import jakarta.persistence.*;
 import lombok.*;

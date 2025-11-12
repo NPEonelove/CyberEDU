@@ -1,4 +1,4 @@
-package org.npeonelove.backend.model.User;
+package org.npeonelove.backend.model.user;
 
 import jakarta.persistence.*;
 import lombok.*;

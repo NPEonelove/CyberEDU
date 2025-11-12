@@ -1,6 +1,6 @@
 package org.npeonelove.backend.security;
 
-import org.npeonelove.backend.model.User.User;
+import org.npeonelove.backend.model.user.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

@@ -9,10 +9,12 @@ import java.util.UUID;
 
 @Getter
 @Setter
-public class ScenarioListResponseDTO {
+public class ScenarioPageResponseDTO {
 
     private UUID scenarioId;
     private String title;
+    private String text;
+    private Boolean scam;
     private GetTypeResponseDTO scenarioType;
 
 }
