@@ -59,4 +59,18 @@ public class UserService {
         return userRepository.existsById(userId);
     }
 
+    // добавление XP юзеру
+    @Transactional
+    public GetUserResponseDTO addExperience(Long userId, Boolean success) {
+        User user = getUserById(userId);
+
+        if (success) {
+            user.setExperience(user.getExperience() + 5);
+        } else {
+            user.setExperience(user.getExperience() + 1);
+        }
+
+        return modelMapper.map(userRepository.save(user), GetUserResponseDTO.class);
+    }
+
 }

@@ -9,6 +9,7 @@ import org.npeonelove.backend.dto.ml.PromptResponseDTO;
 import org.npeonelove.backend.dto.scenario.ScenarioListResponseDTO;
 import org.npeonelove.backend.dto.scenario.ScenarioPageResponseDTO;
 import org.npeonelove.backend.dto.type.GetTypeResponseDTO;
+import org.npeonelove.backend.dto.user.GetUserResponseDTO;
 import org.npeonelove.backend.exception.scenario.ScenarioNotFoundException;
 import org.npeonelove.backend.model.scenario.Scenario;
 import org.npeonelove.backend.repository.ScenarioRepository;
@@ -25,6 +26,7 @@ import java.util.UUID;
 public class ScenarioService {
 
     private final ScenarioRepository scenarioRepository;
+    private final UserService userService;
     private final MlFeignClient mlFeignClient;
     private final ModelMapper modelMapper;
 
@@ -77,8 +79,57 @@ public class ScenarioService {
         return mlFeignClient.sendPrompt(promptRequestDTO);
     }
 
+    // получить объяснения сценария (без ввода от пользователя)
+    @Transactional
+    public PromptResponseDTO getFeedbackFromMl(UUID scenarioId) {
+        Scenario scenario = scenarioRepository.findScenarioByScenarioId(scenarioId).orElseThrow(
+                () -> new ScenarioNotFoundException("Scenario with id " + scenarioId + " not found")
+        );
+
+       if (scenario.getResponse() != null) {
+           return new PromptResponseDTO(scenario.getResponse());
+       }
+
+       PromptResponseDTO promptResponseDTO =
+               mlFeignClient.sendPrompt(new PromptRequestDTO("Текст сценария: " + scenario.getText()));
+
+       scenario.setResponse(promptResponseDTO.getResponse());
+
+       scenarioRepository.save(scenario);
+
+       return promptResponseDTO;
+    }
+
+    // получить объяснения сценария (исходя из ввода пользователя)
+    public PromptResponseDTO getFeedbackFromMl(UUID scenarioId, PromptRequestDTO promptRequestDTO) {
+        Scenario scenario = scenarioRepository.findScenarioByScenarioId(scenarioId).orElseThrow(
+                () -> new ScenarioNotFoundException("Scenario with id " + scenarioId + " not found")
+        );
+
+        return mlFeignClient.sendPrompt(new PromptRequestDTO("Текст сценария: " + scenario.getText() +
+                "\nВвод пользователя: " + promptRequestDTO.getPrompt()));
+    }
+
     // проверить, что ml сервис жив
     public HealthResponseDTO healthCheck() {
         return mlFeignClient.healthCheck();
+    }
+
+    // получить XP за пройденный сценарией
+    @Transactional
+    public GetUserResponseDTO addExperience(Long userId, UUID scenarioId, Boolean answer) {
+        Scenario scenario = scenarioRepository.findScenarioByScenarioId(scenarioId).orElseThrow(
+                () -> new ScenarioNotFoundException("Scenario with id " + scenarioId + " not found")
+        );
+
+        GetUserResponseDTO getUserResponseDTO;
+
+        if (scenario.getScam().equals(answer)) {
+            getUserResponseDTO = userService.addExperience(userId, true);
+        } else {
+            getUserResponseDTO = userService.addExperience(userId, false);
+        }
+
+        return getUserResponseDTO;
     }
 }

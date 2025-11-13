@@ -29,6 +29,9 @@ public class Scenario {
     @Column(name = "scam")
     private Boolean scam;
 
+    @Column(name = "response")
+    private String response;
+
     @ManyToOne
     @JoinColumn(name = "type_id")
     private Type type;
