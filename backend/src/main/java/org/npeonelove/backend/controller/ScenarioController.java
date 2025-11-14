@@ -7,6 +7,7 @@ import org.npeonelove.backend.dto.ml.PromptRequestDTO;
 import org.npeonelove.backend.dto.ml.PromptResponseDTO;
 import org.npeonelove.backend.dto.scenario.ScenarioListResponseDTO;
 import org.npeonelove.backend.dto.scenario.ScenarioPageResponseDTO;
+import org.npeonelove.backend.dto.user.GetUserResponseDTO;
 import org.npeonelove.backend.exception.scenario.ScenarioValidationException;
 import org.npeonelove.backend.service.ScenarioService;
 import org.springframework.http.ResponseEntity;
@@ -43,21 +44,42 @@ public class ScenarioController {
         return ResponseEntity.ok(scenarioService.getScenarioById(scenarioId));
     }
 
-    // получить фидбек по сценарию (неважно с текстом пользователя или нет)
-    @PostMapping("/feedback")
-    public ResponseEntity<PromptResponseDTO> sendPrompt(@RequestBody @Valid PromptRequestDTO promptRequestDTO,
-                                                        BindingResult bindingResult) {
+    // получить объяснения сценария
+    @PostMapping("/{scenarioId}/explain")
+    public ResponseEntity<PromptResponseDTO> explainScenario(@PathVariable("scenarioId") UUID scenarioId) {
+        return ResponseEntity.ok(scenarioService.explainScenario(scenarioId));
+    }
+
+    // получить фидбек по сценарию (исходя из ввода пользователя)
+    @PostMapping("/{scenarioId}/feedback")
+    public ResponseEntity<PromptResponseDTO> getFeedback(@PathVariable("scenarioId") UUID scenarioId,
+                                                         @RequestBody @Valid PromptRequestDTO promptRequestDTO,
+                                                         BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             throw new ScenarioValidationException(validateBindingResult(bindingResult));
         }
 
-        return ResponseEntity.ok(scenarioService.sendPrompt(promptRequestDTO));
+        return ResponseEntity.ok(scenarioService.getFeedback(scenarioId, promptRequestDTO));
+    }
+
+    // сгенерировать сценарий
+    @PostMapping("/generate/{typeId}")
+    public ResponseEntity<ScenarioPageResponseDTO> generateScenario(@PathVariable("typeId") UUID typeId) {
+        return ResponseEntity.ok(scenarioService.generateScenario(typeId));
     }
 
     // проверить, что ml сервис жив
     @GetMapping("/health")
     public ResponseEntity<HealthResponseDTO> healthCheck() {
         return ResponseEntity.ok(scenarioService.healthCheck());
+    }
+
+    // получить XP за пройденный сценарий
+    @PostMapping("/{scenarioId}/finish/{userId}")
+    public ResponseEntity<GetUserResponseDTO> finishScenario(@PathVariable("userId") Long userId,
+                                                             @PathVariable("scenarioId") UUID scenarioId,
+                                                             @RequestParam("answer") Boolean answer) {
+        return ResponseEntity.ok(scenarioService.finishScenario(userId, scenarioId, answer));
     }
 
     // получение строки с ошибками валидации для исключений

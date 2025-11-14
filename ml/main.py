@@ -7,7 +7,8 @@ import logging
 import requests
 import json
 
-transformers_path = r"C:\Users\D_24\Documents\GitHub\CyberEDU\ml\CyberEDU\Lib\site-packages"
+# transformers_path = r"C:\Users\D_24\Documents\GitHub\CyberEDU\ml\CyberEDU\Lib\site-packages"
+transformers_path = r"C:\Users\meow\Desktop\CyberEDU\ml\Lib\site-packages"
 if transformers_path not in sys.path:
     sys.path.insert(0, transformers_path)
 

@@ -6,12 +6,14 @@ import org.npeonelove.backend.client.MlFeignClient;
 import org.npeonelove.backend.dto.ml.HealthResponseDTO;
 import org.npeonelove.backend.dto.ml.PromptRequestDTO;
 import org.npeonelove.backend.dto.ml.PromptResponseDTO;
+import org.npeonelove.backend.dto.scenario.GenerateScenarioResponseDTO;
 import org.npeonelove.backend.dto.scenario.ScenarioListResponseDTO;
 import org.npeonelove.backend.dto.scenario.ScenarioPageResponseDTO;
 import org.npeonelove.backend.dto.type.GetTypeResponseDTO;
 import org.npeonelove.backend.dto.user.GetUserResponseDTO;
 import org.npeonelove.backend.exception.scenario.ScenarioNotFoundException;
 import org.npeonelove.backend.model.scenario.Scenario;
+import org.npeonelove.backend.model.scenario.Type;
 import org.npeonelove.backend.repository.ScenarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,7 @@ public class ScenarioService {
 
     private final ScenarioRepository scenarioRepository;
     private final AchievementService achievementService;
+    private final TypeService typeService;
     private final UserService userService;
     private final MlFeignClient mlFeignClient;
     private final ModelMapper modelMapper;
@@ -75,14 +78,14 @@ public class ScenarioService {
         return scenarioPageResponseDTO;
     }
 
-    // получить фидбек по сценарию (неважно с текстом пользователя или нет)
-    public PromptResponseDTO sendPrompt(PromptRequestDTO promptRequestDTO) {
-        return mlFeignClient.sendPrompt(promptRequestDTO);
-    }
+//     получить фидбек по сценарию (неважно с текстом пользователя или нет)
+//    public PromptResponseDTO sendPrompt(PromptRequestDTO promptRequestDTO) {
+//        return mlFeignClient.sendPrompt(promptRequestDTO);
+//    }
 
-    // получить объяснения сценария (без ввода от пользователя)
+    // получить объяснения сценария
     @Transactional
-    public PromptResponseDTO getFeedbackFromMl(UUID scenarioId) {
+    public PromptResponseDTO explainScenario(UUID scenarioId) {
         Scenario scenario = scenarioRepository.findScenarioByScenarioId(scenarioId).orElseThrow(
                 () -> new ScenarioNotFoundException("Scenario with id " + scenarioId + " not found")
         );
@@ -92,7 +95,7 @@ public class ScenarioService {
        }
 
        PromptResponseDTO promptResponseDTO =
-               mlFeignClient.sendPrompt(new PromptRequestDTO("Текст сценария: " + scenario.getText()));
+               mlFeignClient.explainScenario(new PromptRequestDTO("Текст сценария: " + scenario.getText()));
 
        scenario.setResponse(promptResponseDTO.getResponse());
 
@@ -102,13 +105,25 @@ public class ScenarioService {
     }
 
     // получить объяснения сценария (исходя из ввода пользователя)
-    public PromptResponseDTO getFeedbackFromMl(UUID scenarioId, PromptRequestDTO promptRequestDTO) {
+    public PromptResponseDTO getFeedback(UUID scenarioId, PromptRequestDTO promptRequestDTO) {
         Scenario scenario = scenarioRepository.findScenarioByScenarioId(scenarioId).orElseThrow(
                 () -> new ScenarioNotFoundException("Scenario with id " + scenarioId + " not found")
         );
 
-        return mlFeignClient.sendPrompt(new PromptRequestDTO("Текст сценария: " + scenario.getText() +
+        return mlFeignClient.getFeedback(new PromptRequestDTO("Текст сценария: " + scenario.getText() +
                 "\nВвод пользователя: " + promptRequestDTO.getPrompt()));
+    }
+
+    // сгенерировать сценарий
+    @Transactional
+    public ScenarioPageResponseDTO generateScenario(UUID typeID) {
+        GenerateScenarioResponseDTO generateScenarioResponseDTO = mlFeignClient.generateScenario(new PromptRequestDTO(typeService.getTypeTitle(typeID)));
+        return modelMapper.map(scenarioRepository.save(Scenario.builder()
+                .title(generateScenarioResponseDTO.getTitle())
+                .text(generateScenarioResponseDTO.getText())
+                .scam(Boolean.parseBoolean(generateScenarioResponseDTO.getScam()))
+                .response(generateScenarioResponseDTO.getResponse())
+                .build()), ScenarioPageResponseDTO.class);
     }
 
     // проверить, что ml сервис жив
@@ -118,7 +133,7 @@ public class ScenarioService {
 
     // получить XP за пройденный сценарией
     @Transactional
-    public GetUserResponseDTO addExperience(Long userId, UUID scenarioId, Boolean answer) {
+    public GetUserResponseDTO finishScenario(Long userId, UUID scenarioId, Boolean answer) {
         Scenario scenario = scenarioRepository.findScenarioByScenarioId(scenarioId).orElseThrow(
                 () -> new ScenarioNotFoundException("Scenario with id " + scenarioId + " not found")
         );

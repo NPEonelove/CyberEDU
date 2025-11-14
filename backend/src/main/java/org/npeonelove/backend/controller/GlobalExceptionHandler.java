@@ -7,6 +7,7 @@ import org.npeonelove.backend.exception.auth.SignUpException;
 import org.npeonelove.backend.exception.auth.JwtValidationException;
 import org.npeonelove.backend.exception.scenario.ScenarioNotFoundException;
 import org.npeonelove.backend.exception.scenario.ScenarioValidationException;
+import org.npeonelove.backend.exception.type.TypeNotFoundException;
 import org.npeonelove.backend.exception.user.UserAlreadyExistsException;
 import org.npeonelove.backend.exception.user.UserNotFoundException;
 import org.npeonelove.backend.exception.user.UserUpdateException;
@@ -32,6 +33,7 @@ public class GlobalExceptionHandler {
     private final HttpStatus scenarioValidationStatus = HttpStatus.BAD_REQUEST;
     private final HttpStatus feignInternalServerErrorStatus = HttpStatus.INTERNAL_SERVER_ERROR;
     private final HttpStatus feignExceptionStatus = HttpStatus.SERVICE_UNAVAILABLE;
+    private final HttpStatus typeNotFoundStatus = HttpStatus.NOT_FOUND;
 
     @ExceptionHandler(FeignException.InternalServerError.class)
     public ResponseEntity<ErrorResponse> handleFeignInternalServerError(FeignException.InternalServerError ex) {
@@ -159,6 +161,18 @@ public class GlobalExceptionHandler {
                 new ErrorResponse(
                         scenarioValidationStatus.value(),
                         "Scenario validation error",
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                )
+        );
+    }
+
+    @ExceptionHandler(TypeNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTypeNotFound(TypeNotFoundException ex) {
+        return ResponseEntity.status(typeNotFoundStatus).body(
+                new ErrorResponse(
+                        typeNotFoundStatus.value(),
+                        "Type not found",
                         ex.getMessage(),
                         LocalDateTime.now()
                 )

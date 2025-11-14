@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.info.Info;
 
 @OpenAPIDefinition(
         info = @Info(
-                title = "CyberEDU API",
+                title = "CyberDefender API",
                 version = "1.0.0",
                 contact = @Contact(
                         name = "Ivan Kochetov",

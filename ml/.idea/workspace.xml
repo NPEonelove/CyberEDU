@@ -5,34 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="eef587fd-a034-464b-8ff0-77e1ae5e232c" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/client/MlFeignClient.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/ml/HealthResponseDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/ml/PromptRequestDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/ml/PromptResponseDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/scenario/ScenarioPageResponseDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/type/GetTypeResponseDTO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/exception/scenario/ScenarioNotFoundException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/exception/scenario/ScenarioValidationException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/BackendApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/BackendApplication.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/scenario/GenerateScenarioResponseDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/exception/type/TypeNotFoundException.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/client/MlFeignClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/client/MlFeignClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/config/OpenApiConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/config/OpenApiConfig.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/controller/ScenarioController.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/controller/ScenarioController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/scenario/ScenarioListResponseDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/scenario/ScenarioListResponseDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/user/GetJwtUserClaimsResponseDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/user/GetJwtUserClaimsResponseDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/user/GetUserResponseDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/user/GetUserResponseDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/user/UpdateUserRequestDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/user/UpdateUserRequestDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/user/UpdateUserResponseDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/dto/user/UpdateUserResponseDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/model/Scenario/Scenario.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/model/scenario/Scenario.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/model/Scenario/Type.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/model/scenario/Type.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/model/User/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/model/user/User.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/model/User/UserMode.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/model/user/UserMode.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/model/User/UserRole.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/model/user/UserRole.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/repository/ScenarioRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/repository/ScenarioRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/repository/TypeRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/repository/TypeRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/repository/UserRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/repository/UserRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/security/CustomUserDetails.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/security/CustomUserDetails.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/service/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/service/AuthService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/service/ScenarioService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/service/ScenarioService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/src/main/java/org/npeonelove/backend/service/UserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/ml.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ml.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,9 +26,9 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 5
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 5
+}</component>
   <component name="ProjectId" id="35OFHDXICLmjSsg6g1Hbrcs1SMh" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -56,7 +40,8 @@
     "Python.main.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "backend"
+    "git-widget-placeholder": "backend",
+    "ignore.virus.scanning.warn.message": "true"
   }
 }]]></component>
   <component name="SharedIndexes">
