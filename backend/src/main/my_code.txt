@@ -1,0 +1,2368 @@
+
+================================================================================
+ФАЙЛ: .\collect_code.py
+================================================================================
+
+import os
+import argparse
+
+def should_include_file(file_path, extensions, exclude_dirs):
+    """Проверяет, нужно ли включать файл в результат"""
+    # Проверяем расширение файла
+    if extensions and not any(file_path.endswith(ext) for ext in extensions):
+        return False
+    
+    # Проверяем, не находится ли файл в исключенной директории
+    abs_path = os.path.abspath(file_path)
+    for exclude_dir in exclude_dirs:
+        if exclude_dir in abs_path:
+            return False
+    
+    return True
+
+def collect_code_files(root_dir, output_file, extensions=None, exclude_dirs=None):
+    """
+    Рекурсивно собирает содержимое файлов в указанной директории
+    
+    Args:
+        root_dir (str): Корневая директория для поиска
+        output_file (str): Имя выходного файла
+        extensions (list): Список расширений файлов для включения (например ['.py', '.js', '.txt'])
+        exclude_dirs (list): Список директорий для исключения
+    """
+    if extensions is None:
+        extensions = ['.py', '.js', '.java', '.cpp', '.c', '.html', '.css', '.php', '.rb', '.go', '.rs', '.ts']
+    
+    if exclude_dirs is None:
+        exclude_dirs = ['.git', '__pycache__', 'node_modules', 'venv', '.venv', 'env']
+    
+    # Добавляем полные пути для исключенных директорий
+    exclude_dirs_full = [os.path.abspath(exclude_dir) for exclude_dir in exclude_dirs]
+    
+    with open(output_file, 'w', encoding='utf-8') as out_f:
+        for root, dirs, files in os.walk(root_dir):
+            # Исключаем директории из поиска
+            dirs[:] = [d for d in dirs if os.path.abspath(os.path.join(root, d)) not in exclude_dirs_full]
+            
+            for file in files:
+                file_path = os.path.join(root, file)
+                
+                if should_include_file(file_path, extensions, exclude_dirs_full):
+                    try:
+                        # Записываем разделитель с путем к файлу
+                        out_f.write(f"\n{'='*80}\n")
+                        out_f.write(f"ФАЙЛ: {file_path}\n")
+                        out_f.write(f"{'='*80}\n\n")
+                        
+                        # Читаем и записываем содержимое файла
+                        with open(file_path, 'r', encoding='utf-8') as in_f:
+                            content = in_f.read()
+                            out_f.write(content)
+                            out_f.write('\n')  # Добавляем пустую строку в конце файла
+                            
+                    except UnicodeDecodeError:
+                        # Пропускаем бинарные файлы
+                        out_f.write(f"(бинарный файл или неподдерживаемая кодировка)\n\n")
+                    except Exception as e:
+                        out_f.write(f"(ошибка при чтении файла: {str(e)})\n\n")
+
+def main():
+    parser = argparse.ArgumentParser(description='Сборщик кода из всех файлов в директории')
+    parser.add_argument('--output', '-o', default='all_code.txt', 
+                       help='Имя выходного файла (по умолчанию: all_code.txt)')
+    parser.add_argument('--dir', '-d', default='.', 
+                       help='Корневая директория для поиска (по умолчанию: текущая директория)')
+    parser.add_argument('--extensions', '-e', nargs='+', 
+                       help='Расширения файлов для включения (например: .py .js .html)')
+    parser.add_argument('--exclude-dirs', '-x', nargs='+',
+                       help='Директории для исключения')
+    
+    args = parser.parse_args()
+    
+    # Запускаем сбор файлов
+    collect_code_files(
+        root_dir=args.dir,
+        output_file=args.output,
+        extensions=args.extensions,
+        exclude_dirs=args.exclude_dirs
+    )
+    
+    print(f"Все файлы собраны в: {args.output}")
+
+if __name__ == "__main__":
+    main()
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\BackendApplication.java
+================================================================================
+
+package org.npeonelove.backend;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+
+@SpringBootApplication
+@EnableFeignClients
+public class BackendApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(BackendApplication.class, args);
+    }
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\client\MlFeignClient.java
+================================================================================
+
+package org.npeonelove.backend.client;
+
+import org.npeonelove.backend.dto.ml.HealthResponseDTO;
+import org.npeonelove.backend.dto.ml.PromptRequestDTO;
+import org.npeonelove.backend.dto.ml.PromptResponseDTO;
+import org.npeonelove.backend.dto.scenario.GenerateScenarioResponseDTO;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
+@FeignClient(
+        name = "mlFeignClient",
+        url = "http://localhost:8000"
+)
+public interface MlFeignClient {
+
+    @PostMapping("/feedback")
+    PromptResponseDTO getFeedback(@RequestBody PromptRequestDTO request);
+
+    @PostMapping("/explain-scenario")
+    PromptResponseDTO explainScenario(@RequestBody PromptRequestDTO request);
+
+    @PostMapping("/generate-scenario")
+    GenerateScenarioResponseDTO generateScenario(@RequestBody PromptRequestDTO request);
+
+    @GetMapping("/health")
+    HealthResponseDTO healthCheck();
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\config\AppConfig.java
+================================================================================
+
+package org.npeonelove.backend.config;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+@Configuration
+public class AppConfig {
+
+    @Bean
+    public ModelMapper modelMapper() {
+        return new ModelMapper();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(10);
+    }
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\config\OpenApiConfig.java
+================================================================================
+
+package org.npeonelove.backend.config;
+
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Contact;
+import io.swagger.v3.oas.annotations.info.Info;
+
+@OpenAPIDefinition(
+        info = @Info(
+                title = "CyberDefender API",
+                version = "1.0.0",
+                contact = @Contact(
+                        name = "Ivan Kochetov",
+                        url = "https://t.me/NPEonelove"
+                )
+        )
+)
+public class OpenApiConfig {
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\config\SecurityConfig.java
+================================================================================
+
+package org.npeonelove.backend.config;
+
+import lombok.RequiredArgsConstructor;
+import org.npeonelove.backend.security.jwt.JwtFilter;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@RequiredArgsConstructor
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    private final JwtFilter jwtFilter;
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-resources/**",
+                                "/swagger-resources",
+                                "/webjars/**",
+                                "/api/v1/auth/sign-up",
+                                "/api/v1/auth/sign-in",
+                                "/api/v1/auth/sign-in",
+                                "/api/v1/auth/refresh-access-token"
+                        ).permitAll()
+                        .anyRequest().authenticated())
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\controller\AchievementController.java
+================================================================================
+
+package org.npeonelove.backend.controller;
+
+import lombok.RequiredArgsConstructor;
+import org.npeonelove.backend.dto.achievement.GetAchievementResponseDTO;
+import org.npeonelove.backend.service.AchievementService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@CrossOrigin("*")
+@RestController
+@RequestMapping("/api/v1/achievements")
+@RequiredArgsConstructor
+public class AchievementController {
+
+    private final AchievementService achievementService;
+
+    @GetMapping("/{userId}/give-experience-achievements")
+    public ResponseEntity<Boolean> giveExperienceAchievements(@PathVariable("userId") Long userId) {
+        return ResponseEntity.ok(achievementService.checkAndAwardExperienceAchievements(userId));
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<List<GetAchievementResponseDTO>> getAchievements(@PathVariable("userId") Long userId) {
+        return ResponseEntity.ok(achievementService.getUserAchievements(userId));
+    }
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\controller\AuthController.java
+================================================================================
+
+package org.npeonelove.backend.controller;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.websocket.AuthenticationException;
+import org.npeonelove.backend.dto.jwt.JwtAuthenticationDTO;
+import org.npeonelove.backend.dto.jwt.RefreshTokenDTO;
+import org.npeonelove.backend.dto.jwt.SignInRequestDTO;
+import org.npeonelove.backend.dto.jwt.SignUpRequestDTO;
+import org.npeonelove.backend.exception.auth.JwtValidationException;
+import org.npeonelove.backend.exception.auth.SignInException;
+import org.npeonelove.backend.exception.auth.SignUpException;
+import org.npeonelove.backend.service.AuthService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.*;
+
+@CrossOrigin("*")
+@RestController
+@RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
+public class AuthController {
+
+    private final AuthService authService;
+
+    @GetMapping("/test")
+    public String test() {
+        return "test";
+    }
+
+    @PostMapping("/sign-up")
+    public ResponseEntity<JwtAuthenticationDTO> signUp(@RequestBody @Valid SignUpRequestDTO signUpRequestDTO,
+                                                         BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            throw new SignUpException(validateBindingResult(bindingResult));
+        }
+
+        return ResponseEntity.ok(authService.signUp(signUpRequestDTO));
+    }
+
+    @PostMapping("/sign-in")
+    public ResponseEntity<JwtAuthenticationDTO> signIn(@RequestBody @Valid SignInRequestDTO signInRequestDTO,
+                                                       BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            throw new SignInException(validateBindingResult(bindingResult));
+        }
+
+        return ResponseEntity.ok(authService.signIn(signInRequestDTO));
+    }
+
+    @PostMapping("/refresh-access-token")
+    public ResponseEntity<JwtAuthenticationDTO> refreshAccessToken(@RequestBody @Valid RefreshTokenDTO refreshTokenDTO,
+                                                                   BindingResult bindingResult) throws AuthenticationException {
+        if (bindingResult.hasErrors()) {
+            throw new JwtValidationException(validateBindingResult(bindingResult));
+        }
+
+        return ResponseEntity.ok(authService.refreshAccessToken(refreshTokenDTO));
+    }
+
+    // получение строки с ошибками валидации для исключений
+    private String validateBindingResult(BindingResult bindingResult) {
+        StringBuilder errors = new StringBuilder();
+        for (FieldError error : bindingResult.getFieldErrors()) {
+            errors.append(error.getDefaultMessage());
+            errors.append(" ");
+        }
+        return errors.toString();
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\controller\GlobalExceptionHandler.java
+================================================================================
+
+package org.npeonelove.backend.controller;
+
+import feign.FeignException;
+import org.npeonelove.backend.exception.ErrorResponse;
+import org.npeonelove.backend.exception.auth.SignInException;
+import org.npeonelove.backend.exception.auth.SignUpException;
+import org.npeonelove.backend.exception.auth.JwtValidationException;
+import org.npeonelove.backend.exception.scenario.ScenarioNotFoundException;
+import org.npeonelove.backend.exception.scenario.ScenarioValidationException;
+import org.npeonelove.backend.exception.type.TypeNotFoundException;
+import org.npeonelove.backend.exception.user.UserAlreadyExistsException;
+import org.npeonelove.backend.exception.user.UserNotFoundException;
+import org.npeonelove.backend.exception.user.UserUpdateException;
+import org.apache.tomcat.websocket.AuthenticationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+import java.time.LocalDateTime;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+
+    private final HttpStatus signUpStatus = HttpStatus.BAD_REQUEST;
+    private final HttpStatus signInStatus = HttpStatus.BAD_REQUEST;
+    private final HttpStatus jwtValidationStatus = HttpStatus.BAD_REQUEST;
+    private final HttpStatus userNotFoundStatus = HttpStatus.NOT_FOUND;
+    private final HttpStatus userAlreadyExistsStatus = HttpStatus.CONFLICT;
+    private final HttpStatus userUpdateStatus = HttpStatus.BAD_REQUEST;
+    private final HttpStatus authenticationStatus = HttpStatus.UNAUTHORIZED;
+    private final HttpStatus scenarioNotFoundStatus = HttpStatus.NOT_FOUND;
+    private final HttpStatus scenarioValidationStatus = HttpStatus.BAD_REQUEST;
+    private final HttpStatus feignInternalServerErrorStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+    private final HttpStatus feignExceptionStatus = HttpStatus.SERVICE_UNAVAILABLE;
+    private final HttpStatus typeNotFoundStatus = HttpStatus.NOT_FOUND;
+
+    @ExceptionHandler(FeignException.InternalServerError.class)
+    public ResponseEntity<ErrorResponse> handleFeignInternalServerError(FeignException.InternalServerError ex) {
+        return ResponseEntity.status(feignInternalServerErrorStatus).body(
+                new ErrorResponse(
+                        feignInternalServerErrorStatus.value(),
+                        "ML service error",
+                        "Internal error in ML service: " + ex.getMessage(),
+                        LocalDateTime.now()
+                )
+        );
+    }
+
+    @ExceptionHandler(FeignException.class)
+    public ResponseEntity<ErrorResponse> handleFeignException(FeignException ex) {
+        return ResponseEntity.status(feignExceptionStatus).body(
+                new ErrorResponse(
+                        feignExceptionStatus.value(),
+                        "External service unavailable",
+                        "ML service is currently unavailable: " + ex.getMessage(),
+                        LocalDateTime.now()
+                )
+        );
+    }
+
+    @ExceptionHandler(SignUpException.class)
+    public ResponseEntity<ErrorResponse> handleSignUp(SignUpException ex) {
+        return ResponseEntity.status(signUpStatus).body(
+                new ErrorResponse(
+                        signUpStatus.value(),
+                        "Sign up error",
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                )
+        );
+    }
+
+    @ExceptionHandler(SignInException.class)
+    public ResponseEntity<ErrorResponse> handleSignIn(SignInException ex) {
+        return ResponseEntity.status(signInStatus).body(
+                new ErrorResponse(
+                        signInStatus.value(),
+                        "Sign in error",
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                )
+        );
+    }
+
+    @ExceptionHandler(JwtValidationException.class)
+    public ResponseEntity<ErrorResponse> handleJwtValidation(JwtValidationException ex) {
+        return ResponseEntity.status(jwtValidationStatus).body(
+                new ErrorResponse(
+                        jwtValidationStatus.value(),
+                        "JWT validation error",
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                )
+        );
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
+        return ResponseEntity.status(userNotFoundStatus).body(
+                new ErrorResponse(
+                        userNotFoundStatus.value(),
+                        "User not found",
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                )
+        );
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExists(UserAlreadyExistsException ex) {
+        return ResponseEntity.status(userAlreadyExistsStatus).body(
+                new ErrorResponse(
+                        userAlreadyExistsStatus.value(),
+                        "User already exists",
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                )
+        );
+    }
+
+    @ExceptionHandler(UserUpdateException.class)
+    public ResponseEntity<ErrorResponse> handleUserUpdate(UserUpdateException ex) {
+        return ResponseEntity.status(userUpdateStatus).body(
+                new ErrorResponse(
+                        userUpdateStatus.value(),
+                        "User update error",
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                )
+        );
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
+        return ResponseEntity.status(authenticationStatus).body(
+                new ErrorResponse(
+                        authenticationStatus.value(),
+                        "Authentication error",
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                )
+        );
+    }
+
+    @ExceptionHandler(ScenarioNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleScenarioNotFound(ScenarioNotFoundException ex) {
+        return ResponseEntity.status(scenarioNotFoundStatus).body(
+                new ErrorResponse(
+                        scenarioNotFoundStatus.value(),
+                        "Scenario not found",
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                )
+        );
+    }
+
+    @ExceptionHandler(ScenarioValidationException.class)
+    public ResponseEntity<ErrorResponse> handleScenarioValidation(ScenarioValidationException ex) {
+        return ResponseEntity.status(scenarioValidationStatus).body(
+                new ErrorResponse(
+                        scenarioValidationStatus.value(),
+                        "Scenario validation error",
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                )
+        );
+    }
+
+    @ExceptionHandler(TypeNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTypeNotFound(TypeNotFoundException ex) {
+        return ResponseEntity.status(typeNotFoundStatus).body(
+                new ErrorResponse(
+                        typeNotFoundStatus.value(),
+                        "Type not found",
+                        ex.getMessage(),
+                        LocalDateTime.now()
+                )
+        );
+    }
+
+}
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\controller\ScenarioController.java
+================================================================================
+
+package org.npeonelove.backend.controller;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.npeonelove.backend.dto.ml.HealthResponseDTO;
+import org.npeonelove.backend.dto.ml.PromptRequestDTO;
+import org.npeonelove.backend.dto.ml.PromptResponseDTO;
+import org.npeonelove.backend.dto.scenario.ScenarioListResponseDTO;
+import org.npeonelove.backend.dto.scenario.ScenarioPageResponseDTO;
+import org.npeonelove.backend.dto.user.GetUserResponseDTO;
+import org.npeonelove.backend.exception.scenario.ScenarioValidationException;
+import org.npeonelove.backend.service.ScenarioService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@CrossOrigin("*")
+@RestController
+@RequestMapping("/api/v1/scenarios")
+@RequiredArgsConstructor
+public class ScenarioController {
+
+    private final ScenarioService scenarioService;
+
+    // получение всех сценариев
+    @GetMapping
+    public ResponseEntity<List<ScenarioListResponseDTO>> getAllScenarios() {
+        return ResponseEntity.ok(scenarioService.getAllScenarios());
+    }
+
+    // получение всех сценариев по определенному типу
+    @GetMapping("/type/{typeId}")
+    public ResponseEntity<List<ScenarioListResponseDTO>> getScenariosByTypeId(@PathVariable("typeId") UUID typeId) {
+        return ResponseEntity.ok(scenarioService.getScenariosByTypeId(typeId));
+    }
+
+    // получить конкретный сценарий по id
+    @GetMapping("/{scenarioId}")
+    public ResponseEntity<ScenarioPageResponseDTO> getScenarioById(@PathVariable("scenarioId") UUID scenarioId) {
+        return ResponseEntity.ok(scenarioService.getScenarioById(scenarioId));
+    }
+
+    // получить объяснения сценария
+    @PostMapping("/{scenarioId}/explain")
+    public ResponseEntity<PromptResponseDTO> explainScenario(@PathVariable("scenarioId") UUID scenarioId) {
+        return ResponseEntity.ok(scenarioService.explainScenario(scenarioId));
+    }
+
+    // получить фидбек по сценарию (исходя из ввода пользователя)
+    @PostMapping("/{scenarioId}/feedback")
+    public ResponseEntity<PromptResponseDTO> getFeedback(@PathVariable("scenarioId") UUID scenarioId,
+                                                         @RequestBody @Valid PromptRequestDTO promptRequestDTO,
+                                                         BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            throw new ScenarioValidationException(validateBindingResult(bindingResult));
+        }
+
+        return ResponseEntity.ok(scenarioService.getFeedback(scenarioId, promptRequestDTO));
+    }
+
+    // сгенерировать сценарий
+    @PostMapping("/generate/{typeId}")
+    public ResponseEntity<ScenarioPageResponseDTO> generateScenario(@PathVariable("typeId") UUID typeId) {
+        return ResponseEntity.ok(scenarioService.generateScenario(typeId));
+    }
+
+    // проверить, что ml сервис жив
+    @GetMapping("/health")
+    public ResponseEntity<HealthResponseDTO> healthCheck() {
+        return ResponseEntity.ok(scenarioService.healthCheck());
+    }
+
+    // получить XP за пройденный сценарий
+    @PostMapping("/{scenarioId}/finish/{userId}")
+    public ResponseEntity<GetUserResponseDTO> finishScenario(@PathVariable("userId") Long userId,
+                                                             @PathVariable("scenarioId") UUID scenarioId,
+                                                             @RequestParam("answer") Boolean answer) {
+        return ResponseEntity.ok(scenarioService.finishScenario(userId, scenarioId, answer));
+    }
+
+    // получение строки с ошибками валидации для исключений
+    private String validateBindingResult(BindingResult bindingResult) {
+        StringBuilder errors = new StringBuilder();
+        for (FieldError error : bindingResult.getFieldErrors()) {
+            errors.append(error.getDefaultMessage());
+            errors.append(" ");
+        }
+        return errors.toString();
+    }
+}
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\controller\TypeController.java
+================================================================================
+
+package org.npeonelove.backend.controller;
+
+import lombok.RequiredArgsConstructor;
+import org.npeonelove.backend.service.TypeService;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/v1/types")
+@RequiredArgsConstructor
+public class TypeController {
+
+    private final TypeService typeService;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\controller\UserController.java
+================================================================================
+
+package org.npeonelove.backend.controller;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.npeonelove.backend.dto.user.GetUserResponseDTO;
+import org.npeonelove.backend.dto.user.UpdateUserRequestDTO;
+import org.npeonelove.backend.dto.user.UpdateUserResponseDTO;
+import org.npeonelove.backend.exception.user.UserUpdateException;
+import org.npeonelove.backend.service.UserService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.*;
+
+@CrossOrigin("*")
+@RestController
+@RequestMapping("/api/v1/users")
+@RequiredArgsConstructor
+public class UserController {
+
+    private final UserService userService;
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<GetUserResponseDTO> getUser(@PathVariable("userId") Long userId) {
+        return ResponseEntity.ok(userService.getUser(userId));
+    }
+
+    @PatchMapping("/{userId}")
+    public ResponseEntity<UpdateUserResponseDTO> updateUser(@PathVariable("userId") Long userId,
+                                                            @RequestBody @Valid UpdateUserRequestDTO updateUserRequestDTO,
+                                                            BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            throw new UserUpdateException(validateBindingResult(bindingResult));
+        }
+
+        return ResponseEntity.ok(userService.updateUser(userId, updateUserRequestDTO));
+    }
+
+    // получение строки с ошибками валидации для исключений
+    private String validateBindingResult(BindingResult bindingResult) {
+        StringBuilder errors = new StringBuilder();
+        for (FieldError error : bindingResult.getFieldErrors()) {
+            errors.append(error.getDefaultMessage());
+            errors.append(" ");
+        }
+        return errors.toString();
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\achievement\GetAchievementResponseDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.achievement;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.npeonelove.backend.model.achievement.Type;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Getter
+@Setter
+public class GetAchievementResponseDTO {
+
+    private UUID achievementId;
+    private String name;
+    private String description;
+    private String icon;
+    private Integer requiredExp;
+    private Type type;
+    private LocalDateTime earnedAt;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\jwt\JwtAuthenticationDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.jwt;
+
+import lombok.Data;
+
+@Data
+public class JwtAuthenticationDTO {
+
+    private String accessToken;
+    private String refreshToken;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\jwt\RefreshTokenDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.jwt;
+
+import lombok.Data;
+
+@Data
+public class RefreshTokenDTO {
+
+    private String refreshToken;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\jwt\SignInRequestDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.jwt;
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class SignInRequestDTO {
+
+//    private String token;
+    private Long userId;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\jwt\SignUpRequestDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.jwt;
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class SignUpRequestDTO {
+
+//    private String token;
+    private Long userId;
+    private String username;
+    private Integer age;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\ml\HealthResponseDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.ml;
+
+import lombok.*;
+
+@Getter
+@Setter
+public class HealthResponseDTO {
+
+    private String status;
+
+}
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\ml\PromptRequestDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.ml;
+
+import lombok.*;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class PromptRequestDTO {
+
+    private String prompt;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\ml\PromptResponseDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.ml;
+
+import lombok.*;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class PromptResponseDTO {
+
+    private String response;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\scenario\GenerateScenarioResponseDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.scenario;
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class GenerateScenarioResponseDTO {
+
+    private String title;
+    private String text;
+    private String scam;
+    private String response;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\scenario\ScenarioListResponseDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.scenario;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.npeonelove.backend.dto.type.GetTypeResponseDTO;
+import org.npeonelove.backend.model.scenario.Type;
+
+import java.util.UUID;
+
+@Getter
+@Setter
+public class ScenarioListResponseDTO {
+
+    private UUID scenarioId;
+    private String title;
+    private GetTypeResponseDTO scenarioType;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\scenario\ScenarioPageResponseDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.scenario;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.npeonelove.backend.dto.type.GetTypeResponseDTO;
+import org.npeonelove.backend.model.scenario.Type;
+
+import java.util.UUID;
+
+@Getter
+@Setter
+public class ScenarioPageResponseDTO {
+
+    private UUID scenarioId;
+    private String title;
+    private String text;
+    private Boolean scam;
+    private GetTypeResponseDTO scenarioType;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\type\GetTypeResponseDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.type;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.UUID;
+
+@Getter
+@Setter
+public class GetTypeResponseDTO {
+
+    private UUID typeId;
+    private String title;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\user\GetJwtUserClaimsResponseDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.user;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.Setter;
+import org.npeonelove.backend.model.user.UserRole;
+
+@Getter
+@Setter
+@Schema(description = "DTO containing JWT claims information for authenticated user")
+public class GetJwtUserClaimsResponseDTO {
+
+    private Long userId;
+    private UserRole role;
+
+}
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\user\GetUserResponseDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.user;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.npeonelove.backend.model.user.UserMode;
+import org.npeonelove.backend.model.user.UserRole;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class GetUserResponseDTO {
+
+    private Long userId;
+    private String userName;
+    private Integer age;
+    private UserMode mode;
+    private Integer experience;
+    private UserRole role;
+    private LocalDateTime createdAt;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\user\UpdateUserRequestDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.user;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.npeonelove.backend.model.user.UserMode;
+
+@Getter
+@Setter
+public class UpdateUserRequestDTO {
+
+    private String username;
+    private Integer age;
+    private UserMode mode;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\dto\user\UpdateUserResponseDTO.java
+================================================================================
+
+package org.npeonelove.backend.dto.user;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.npeonelove.backend.model.user.UserMode;
+import org.npeonelove.backend.model.user.UserRole;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+public class UpdateUserResponseDTO {
+
+    private Long userId;
+    private String userName;
+    private Integer age;
+    private UserMode mode;
+    private Integer experience;
+    private UserRole role;
+    private LocalDateTime createdAt;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\exception\ErrorResponse.java
+================================================================================
+
+package org.npeonelove.backend.exception;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@AllArgsConstructor
+public class ErrorResponse {
+    int statusCode;
+    String error;
+    String message;
+    LocalDateTime timestamp;
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\exception\auth\JwtValidationException.java
+================================================================================
+
+package org.npeonelove.backend.exception.auth;
+
+public class JwtValidationException extends RuntimeException {
+    public JwtValidationException(String message) {
+        super(message);
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\exception\auth\SignInException.java
+================================================================================
+
+package org.npeonelove.backend.exception.auth;
+
+public class SignInException extends RuntimeException {
+    public SignInException(String message) {
+        super(message);
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\exception\auth\SignUpException.java
+================================================================================
+
+package org.npeonelove.backend.exception.auth;
+
+public class SignUpException extends RuntimeException {
+    public SignUpException(String message) {
+        super(message);
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\exception\scenario\ScenarioNotFoundException.java
+================================================================================
+
+package org.npeonelove.backend.exception.scenario;
+
+public class ScenarioNotFoundException extends RuntimeException {
+    public ScenarioNotFoundException(String message) {
+        super(message);
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\exception\scenario\ScenarioValidationException.java
+================================================================================
+
+package org.npeonelove.backend.exception.scenario;
+
+public class ScenarioValidationException extends RuntimeException {
+    public ScenarioValidationException(String message) {
+        super(message);
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\exception\type\TypeNotFoundException.java
+================================================================================
+
+package org.npeonelove.backend.exception.type;
+
+public class TypeNotFoundException extends RuntimeException {
+    public TypeNotFoundException(String message) {
+        super(message);
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\exception\user\UserAlreadyExistsException.java
+================================================================================
+
+package org.npeonelove.backend.exception.user;
+
+public class UserAlreadyExistsException extends RuntimeException {
+    public UserAlreadyExistsException(String message) {
+        super(message);
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\exception\user\UserNotFoundException.java
+================================================================================
+
+package org.npeonelove.backend.exception.user;
+
+public class UserNotFoundException extends RuntimeException {
+    public UserNotFoundException(String message) {
+        super(message);
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\exception\user\UserUpdateException.java
+================================================================================
+
+package org.npeonelove.backend.exception.user;
+
+public class UserUpdateException extends RuntimeException {
+    public UserUpdateException(String message) {
+        super(message);
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\model\achievement\Achievement.java
+================================================================================
+
+package org.npeonelove.backend.model.achievement;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "achievements")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+@ToString
+@Builder
+public class Achievement {
+
+    @Id
+    @Column(name = "achievement_id")
+    private UUID achievementId;
+
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "icon")
+    private String icon;
+
+    @Column(name = "required_exp")
+    private Integer requiredExp;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private Type type;
+
+    @CreationTimestamp
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+}
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\model\achievement\Type.java
+================================================================================
+
+package org.npeonelove.backend.model.achievement;
+
+public enum Type {
+    EXPERIENCE, SPECIAL
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\model\achievement\UserAchievement.java
+================================================================================
+
+package org.npeonelove.backend.model.achievement;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.npeonelove.backend.model.user.User;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "user_achievements")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+@ToString
+@Builder
+public class UserAchievement {
+
+    @EmbeddedId
+    private UserAchievementId id;
+
+    @ManyToOne
+    @MapsId("userId")
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne
+    @MapsId("achievementId")
+    @JoinColumn(name = "achievement_id")
+    private Achievement achievement;
+
+    @CreationTimestamp
+    @Column(name = "earned_at")
+    private LocalDateTime earnedAt;
+}
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\model\achievement\UserAchievementId.java
+================================================================================
+
+package org.npeonelove.backend.model.achievement;
+
+import jakarta.persistence.Embeddable;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.util.UUID;
+
+@Embeddable
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserAchievementId implements Serializable {
+
+    private Long userId;
+    private UUID achievementId;
+}
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\model\scenario\Scenario.java
+================================================================================
+
+package org.npeonelove.backend.model.scenario;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.UUID;
+
+@Entity
+@Table(name = "scenarios")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+@ToString
+@Builder
+public class Scenario {
+
+    @Id
+    @Column(name = "scenario_id")
+    private UUID scenarioId;
+
+    @Column(name = "title")
+    private String title;
+
+    @Column(name = "text")
+    private String text;
+
+    @Column(name = "scam")
+    private Boolean scam;
+
+    @Column(name = "response")
+    private String response;
+
+    @ManyToOne
+    @JoinColumn(name = "type_id")
+    private Type type;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\model\scenario\Type.java
+================================================================================
+
+package org.npeonelove.backend.model.scenario;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@Entity
+@Table(name = "types")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+@ToString
+@Builder
+public class Type {
+
+    @Id
+    @Column(name = "type_id")
+    private UUID typeId;
+
+    @Column(name = "title")
+    private String title;
+
+    @OneToMany(mappedBy = "type")
+    @ToString.Exclude
+    private List<Scenario> scenarios;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\model\user\User.java
+================================================================================
+
+package org.npeonelove.backend.model.user;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CurrentTimestamp;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+@ToString
+@Builder
+public class User {
+
+    @Id
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "username")
+    private String username;
+
+    @Column(name = "age")
+    private Integer age;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode")
+    private UserMode mode;
+
+    @Column(name = "experience")
+    private Integer experience;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role")
+    private UserRole role;
+
+    @CurrentTimestamp
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\model\user\UserMode.java
+================================================================================
+
+package org.npeonelove.backend.model.user;
+
+public enum UserMode {
+    CHILD, ADULT
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\model\user\UserRole.java
+================================================================================
+
+package org.npeonelove.backend.model.user;
+
+public enum UserRole {
+    USER, ADMIN
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\repository\AchievementRepository.java
+================================================================================
+
+// AchievementRepository.java (дополненная)
+package org.npeonelove.backend.repository;
+
+import org.npeonelove.backend.model.achievement.Achievement;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.UUID;
+
+@Repository
+public interface AchievementRepository extends JpaRepository<Achievement, UUID> {
+
+    @Query(value = "SELECT * FROM achievements WHERE type = :type", nativeQuery = true)
+    List<Achievement> findAchievementsByType(@Param("type") String type);
+
+    @Query(value = """
+        SELECT a.* FROM achievements a 
+        WHERE a.type = :type 
+        AND a.required_exp <= :experience 
+        AND a.achievement_id NOT IN (
+            SELECT ua.achievement_id FROM user_achievements ua 
+            WHERE ua.user_id = :userId
+        )
+        """, nativeQuery = true)
+    List<Achievement> findByTypeAndRequiredExpLessThanEqualAndIdNotInUserAchievements(
+            @Param("type") String type,
+            @Param("experience") Integer experience,
+            @Param("userId") Long userId);
+
+    @Query(value = """
+        SELECT a.* FROM achievements a 
+        INNER JOIN user_achievements ua ON a.achievement_id = ua.achievement_id 
+        WHERE ua.user_id = :userId
+        """, nativeQuery = true)
+    List<Achievement> findByUserId(@Param("userId") Long userId);
+}
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\repository\ScenarioRepository.java
+================================================================================
+
+package org.npeonelove.backend.repository;
+
+import org.npeonelove.backend.model.scenario.Scenario;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface ScenarioRepository extends JpaRepository<Scenario, UUID> {
+    List<Scenario> findScenarioByType_TypeId(UUID typeTypeId);
+
+    Optional<Scenario> findScenarioByScenarioId(UUID scenarioId);
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\repository\TypeRepository.java
+================================================================================
+
+package org.npeonelove.backend.repository;
+
+import org.npeonelove.backend.model.scenario.Type;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import javax.swing.text.html.Option;
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface TypeRepository extends JpaRepository<Type, UUID> {
+    Optional<Type> findTypeByTypeId(UUID typeId);
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\repository\UserAchievementRepository.java
+================================================================================
+
+package org.npeonelove.backend.repository;
+
+import org.npeonelove.backend.model.achievement.UserAchievement;
+import org.npeonelove.backend.model.achievement.UserAchievementId;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.UUID;
+
+@Repository
+public interface UserAchievementRepository extends JpaRepository<UserAchievement, UserAchievementId> {
+
+    @Query(value = "SELECT achievement_id FROM user_achievements WHERE user_id = :userId", nativeQuery = true)
+    List<UUID> findAchievementIdsByUserId(@Param("userId") Long userId);
+
+    @Query(value = "SELECT EXISTS(SELECT 1 FROM user_achievements WHERE user_id = :userId AND achievement_id = :achievementId)", nativeQuery = true)
+    boolean existsByUserIdAndAchievementId(@Param("userId") Long userId, @Param("achievementId") UUID achievementId);
+}
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\repository\UserRepository.java
+================================================================================
+
+package org.npeonelove.backend.repository;
+
+import org.npeonelove.backend.model.user.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findUserByUserId(Long userId);
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\security\CustomUserDetails.java
+================================================================================
+
+package org.npeonelove.backend.security;
+
+import org.npeonelove.backend.model.user.User;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.List;
+
+public record CustomUserDetails(User user) implements UserDetails {
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().toString()));
+    }
+
+    @Override
+    public String getPassword() {
+        return null;
+    }
+
+    @Override
+    public String getUsername() {
+        return null;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return UserDetails.super.isAccountNonExpired();
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return UserDetails.super.isAccountNonLocked();
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return UserDetails.super.isCredentialsNonExpired();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return UserDetails.super.isEnabled();
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\security\CustomUserService.java
+================================================================================
+
+package org.npeonelove.backend.security;
+
+import lombok.RequiredArgsConstructor;
+import org.npeonelove.backend.exception.user.UserNotFoundException;
+import org.npeonelove.backend.repository.UserRepository;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class CustomUserService implements UserDetailsService {
+
+    private final UserRepository userRepository;
+
+    @Override
+    public CustomUserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
+        return userRepository.findUserByUserId(Long.parseLong(userId)).map(CustomUserDetails::new).orElseThrow(
+                () -> new UserNotFoundException("User with id " + userId + " not found"));
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\security\SecurityService.java
+================================================================================
+
+package org.npeonelove.backend.security;
+
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+
+@Component
+public class SecurityService {
+
+    public Long getUserIdFromSecurityContext() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            throw new AuthenticationCredentialsNotFoundException("Authentication object is null");
+        }
+
+        return Long.parseLong(authentication.getName());
+    }
+
+}
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\security\jwt\JwtFilter.java
+================================================================================
+
+package org.npeonelove.backend.security.jwt;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.npeonelove.backend.security.CustomUserDetails;
+import org.npeonelove.backend.security.CustomUserService;
+import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+@Component
+@RequiredArgsConstructor
+public class JwtFilter extends OncePerRequestFilter {
+
+    private final JwtService jwtService;
+    private final CustomUserService customUserService;
+
+    // проверяет токен, и если он валиден, то авторизует пользователя в системе
+    @Override
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+
+        String accessToken = getAccessTokenFromRequest(request);
+
+        if (accessToken != null && jwtService.validateJwtToken(accessToken)) {
+            setCustomUserDetailsToSecurityContextHolder(accessToken);
+        }
+
+        filterChain.doFilter(request, response);
+    }
+
+    // получение access токена из запроса
+    private String getAccessTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+
+    // непосредственно, авторизация пользователя в системе
+    private void setCustomUserDetailsToSecurityContextHolder(String accessToken) {
+        String userId = jwtService.getUserIdFromJwtToken(accessToken);
+
+        CustomUserDetails customUserDetails = customUserService.loadUserByUsername(userId);
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(userId, null,
+                        customUserDetails.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\security\jwt\JwtService.java
+================================================================================
+
+package org.npeonelove.backend.security.jwt;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
+import org.npeonelove.backend.dto.jwt.JwtAuthenticationDTO;
+import org.npeonelove.backend.dto.user.GetJwtUserClaimsResponseDTO;
+import org.npeonelove.backend.service.UserService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.UUID;
+
+@Component
+@RequiredArgsConstructor
+public class JwtService {
+
+    @Value("${jwt.secret-key}")
+    private String jwtSecretKey;
+
+    @Value("${access-token.ttl}")
+    private int accessTokenTtl;
+
+    @Value("${refresh-token.ttl}")
+    private int refreshTokenTtl;
+
+    private final UserService userService;
+
+    // получение access и refresh токена
+    public JwtAuthenticationDTO generateAuthToken(Long userId) {
+        JwtAuthenticationDTO jwtAuthenticationDTO = new JwtAuthenticationDTO();
+        jwtAuthenticationDTO.setAccessToken(generateAccessToken(userId));
+        jwtAuthenticationDTO.setRefreshToken(generateRefreshToken(userId));
+        return jwtAuthenticationDTO;
+    }
+
+    // обновление access токена
+    public JwtAuthenticationDTO refreshAccessToken(Long userId, String refreshToken) {
+        JwtAuthenticationDTO jwtAuthenticationDTO = new JwtAuthenticationDTO();
+        jwtAuthenticationDTO.setAccessToken(generateAccessToken(userId));
+        jwtAuthenticationDTO.setRefreshToken(refreshToken);
+        return jwtAuthenticationDTO;
+    }
+
+    // генерация access токена
+    private String generateAccessToken(Long userId) {
+        GetJwtUserClaimsResponseDTO user = userService.getJwtUserClaims(userId);
+
+        Date date = Date.from(LocalDateTime.now().plusMinutes(accessTokenTtl)
+                .atZone(ZoneId.systemDefault()).toInstant());
+
+        return Jwts.builder()
+                .subject(user.getUserId().toString())
+                .claim("role", user.getRole().toString())
+                .expiration(date)
+                .signWith(getSignKey())
+                .compact();
+    }
+
+    // генерация refresh токена
+    private String generateRefreshToken(Long userId) {
+        GetJwtUserClaimsResponseDTO user = userService.getJwtUserClaims(userId);
+
+        Date date = Date.from(LocalDateTime.now().plusYears(refreshTokenTtl)
+                .atZone(ZoneId.systemDefault()).toInstant());
+
+        return Jwts.builder()
+                .subject(user.getUserId().toString())
+                .claim("role", user.getRole().toString())
+                .expiration(date)
+                .signWith(getSignKey())
+                .compact();
+    }
+
+    // получение userId из access токена
+    public String getUserIdFromJwtToken(String accessToken) {
+        Claims claims = getClaimsFromAccessToken(accessToken);
+        return claims.getSubject();
+    }
+
+    // валидация jwt токена
+    public boolean validateJwtToken(String token) {
+        try {
+            getClaimsFromAccessToken(token);
+        } catch (Exception e) {
+            throw e;
+        }
+
+        return true;
+    }
+
+    // получение payload из access токена
+    private Claims getClaimsFromAccessToken(String accessToken) {
+        return Jwts.parser()
+                .verifyWith(getSignKey())
+                .build()
+                .parseClaimsJws(accessToken)
+                .getPayload();
+    }
+
+    // генерация подписи
+    private SecretKey getSignKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecretKey);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\service\AchievementService.java
+================================================================================
+
+// AchievementService.java (исправленная)
+package org.npeonelove.backend.service;
+
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.npeonelove.backend.dto.achievement.GetAchievementResponseDTO;
+import org.npeonelove.backend.model.achievement.Achievement;
+import org.npeonelove.backend.model.achievement.UserAchievement;
+import org.npeonelove.backend.model.achievement.UserAchievementId;
+import org.npeonelove.backend.model.user.User;
+import org.npeonelove.backend.repository.AchievementRepository;
+import org.npeonelove.backend.repository.ScenarioRepository;
+import org.npeonelove.backend.repository.UserAchievementRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
+public class AchievementService {
+
+    private final AchievementRepository achievementRepository;
+    private final UserAchievementRepository userAchievementRepository;
+    private final ModelMapper modelMapper;
+    private final UserService userService;
+
+//    // Основной метод для выдачи XP и проверки ачивок
+//    @Transactional
+//    public void addExperienceAndCheckAchievements(Long userId, Integer expToAdd) {
+//        // Добавляем опыт
+//        userService.addExperience(userId, expToAdd);
+//
+//
+//        // Проверяем и выдаем ачивки
+//        checkAndAwardExperienceAchievements(userId);
+//    }
+
+    // Метод для проверки и выдачи ачивок за опыт
+    @Transactional
+    public Boolean checkAndAwardExperienceAchievements(Long userId) {
+        User user = userService.getUserById(userId);
+        Integer experience = user.getExperience();
+
+        // Получаем все ачивки за опыт которые пользователь еще не получил
+        List<Achievement> availableAchievements = achievementRepository
+                .findByTypeAndRequiredExpLessThanEqualAndIdNotInUserAchievements(
+                        "EXPERIENCE", experience, userId);
+
+        // Выдаем каждую подходящую ачивку
+        for (Achievement achievement : availableAchievements) {
+            awardAchievement(userId, achievement.getAchievementId());
+        }
+
+        return true;
+    }
+
+    // Метод для выдачи конкретной ачивки
+    @Transactional
+    public void awardAchievement(Long userId, UUID achievementId) {
+        if (!userAchievementRepository.existsByUserIdAndAchievementId(userId, achievementId)) {
+            User user = userService.getUserById(userId);
+            Achievement achievement = achievementRepository.findById(achievementId)
+                    .orElseThrow(() -> new RuntimeException("Achievement not found"));
+
+            UserAchievement userAchievement = UserAchievement.builder()
+                    .id(new UserAchievementId(userId, achievementId))
+                    .user(user)
+                    .achievement(achievement)
+                    .build();
+
+            userAchievementRepository.save(userAchievement);
+            System.out.println("Achievement awarded: " + achievementId + " to user: " + userId);
+        }
+    }
+
+    // Получить все ачивки пользователя
+    public List<GetAchievementResponseDTO> getUserAchievements(Long userId) {
+        User user = userService.getUserById(userId);
+        List<GetAchievementResponseDTO> achievements = new ArrayList<>();
+        for (Achievement achievement : achievementRepository.findByUserId(user.getUserId())) {
+            achievements.add(modelMapper.map(achievement, GetAchievementResponseDTO.class));
+        }
+        return achievements;
+    }
+}
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\service\AuthService.java
+================================================================================
+
+package org.npeonelove.backend.service;
+
+import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.websocket.AuthenticationException;
+import org.npeonelove.backend.dto.jwt.JwtAuthenticationDTO;
+import org.npeonelove.backend.dto.jwt.RefreshTokenDTO;
+import org.npeonelove.backend.dto.jwt.SignInRequestDTO;
+import org.npeonelove.backend.dto.jwt.SignUpRequestDTO;
+import org.npeonelove.backend.exception.user.UserAlreadyExistsException;
+import org.npeonelove.backend.model.user.User;
+import org.npeonelove.backend.model.user.UserMode;
+import org.npeonelove.backend.model.user.UserRole;
+import org.npeonelove.backend.security.jwt.JwtService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class AuthService {
+
+    private final UserService userService;
+    private final JwtService jwtService;
+
+    // регистрация пользователя
+    @Transactional
+    public JwtAuthenticationDTO signUp(SignUpRequestDTO signUpRequestDTO) {
+
+        // TODO: сделать нормальную логику с зашифрованной строкой
+
+        if (userService.existsUserById(signUpRequestDTO.getUserId())) {
+            throw new UserAlreadyExistsException("User with id " + signUpRequestDTO.getUserId() + " already exists");
+        }
+
+        User userEntity = userService.saveUser(User.builder()
+                .userId(signUpRequestDTO.getUserId())
+                .username(signUpRequestDTO.getUsername())
+                .age(signUpRequestDTO.getAge())
+                .mode((signUpRequestDTO.getAge() >= 18) ? UserMode.ADULT : UserMode.CHILD)
+                .experience(0)
+                .role(UserRole.USER)
+                .createdAt(LocalDateTime.now())
+                .build());
+
+        return jwtService.generateAuthToken(userEntity.getUserId());
+    }
+
+    public JwtAuthenticationDTO signIn(SignInRequestDTO signInRequestDTO) {
+
+        // TODO: сделать нормальную логику с зашифрованной строкой
+
+        User user = userService.getUserById(signInRequestDTO.getUserId());
+
+//        if (user.isEmpty()) {
+//            throw new UserNotFoundException("User with id " + signInRequestDTO.getUserId() + "does not exist");
+//        }
+
+        return jwtService.generateAuthToken(user.getUserId());
+    }
+
+    // генерация access токена по refresh токену
+    public JwtAuthenticationDTO refreshAccessToken(RefreshTokenDTO refreshTokenDTO) throws AuthenticationException {
+
+        String refreshToken = refreshTokenDTO.getRefreshToken();
+
+        if (refreshToken != null && jwtService.validateJwtToken(refreshToken)) {
+            User user = userService.getUserById(Long.parseLong(jwtService.getUserIdFromJwtToken(refreshToken)));
+            return jwtService.refreshAccessToken(user.getUserId(), refreshToken);
+        }
+
+        throw new AuthenticationException("Invalid refresh token");
+    }
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\service\ScenarioService.java
+================================================================================
+
+package org.npeonelove.backend.service;
+
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.npeonelove.backend.client.MlFeignClient;
+import org.npeonelove.backend.dto.ml.HealthResponseDTO;
+import org.npeonelove.backend.dto.ml.PromptRequestDTO;
+import org.npeonelove.backend.dto.ml.PromptResponseDTO;
+import org.npeonelove.backend.dto.scenario.GenerateScenarioResponseDTO;
+import org.npeonelove.backend.dto.scenario.ScenarioListResponseDTO;
+import org.npeonelove.backend.dto.scenario.ScenarioPageResponseDTO;
+import org.npeonelove.backend.dto.type.GetTypeResponseDTO;
+import org.npeonelove.backend.dto.user.GetUserResponseDTO;
+import org.npeonelove.backend.exception.scenario.ScenarioNotFoundException;
+import org.npeonelove.backend.model.scenario.Scenario;
+import org.npeonelove.backend.model.scenario.Type;
+import org.npeonelove.backend.repository.ScenarioRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
+public class ScenarioService {
+
+    private final ScenarioRepository scenarioRepository;
+    private final AchievementService achievementService;
+    private final TypeService typeService;
+    private final UserService userService;
+    private final MlFeignClient mlFeignClient;
+    private final ModelMapper modelMapper;
+
+    // получение всех сценариев
+    public List<ScenarioListResponseDTO>  getAllScenarios() {
+        List<Scenario> scenarios = scenarioRepository.findAll();
+        List<ScenarioListResponseDTO> scenarioListResponseDTOList = new ArrayList<>();
+
+        for (Scenario scenario : scenarios) {
+            ScenarioListResponseDTO scenarioListResponseDTO = modelMapper.map(scenario, ScenarioListResponseDTO.class);
+            scenarioListResponseDTO.setScenarioType(modelMapper.map(scenario.getType(), GetTypeResponseDTO.class));
+
+            scenarioListResponseDTOList.add(scenarioListResponseDTO);
+        }
+
+        return scenarioListResponseDTOList;
+    }
+
+    // получение всех сценариев по определенному типу
+    public List<ScenarioListResponseDTO> getScenariosByTypeId(UUID typeId) {
+        List<Scenario> scenarios = scenarioRepository.findScenarioByType_TypeId(typeId);
+        List<ScenarioListResponseDTO> scenarioListResponseDTOList = new ArrayList<>();
+
+        for (Scenario scenario : scenarios) {
+            if (scenario.getType().getTypeId().equals(typeId)) {
+                ScenarioListResponseDTO scenarioListResponseDTO = modelMapper.map(scenario, ScenarioListResponseDTO.class);
+                scenarioListResponseDTO.setScenarioType(modelMapper.map(scenario.getType(), GetTypeResponseDTO.class));
+
+                scenarioListResponseDTOList.add(scenarioListResponseDTO);
+            }
+        }
+
+        return scenarioListResponseDTOList;
+    }
+
+    // получить конкретный сценарий по id
+    public ScenarioPageResponseDTO getScenarioById(UUID scenarioId) {
+        Scenario scenario = scenarioRepository.findById(scenarioId).orElseThrow(
+                () -> new ScenarioNotFoundException("Scenario with id " + scenarioId + " not found")
+        );
+
+        ScenarioPageResponseDTO scenarioPageResponseDTO = modelMapper.map(scenario, ScenarioPageResponseDTO.class);
+        scenarioPageResponseDTO.setScenarioType(modelMapper.map(scenario.getType(), GetTypeResponseDTO.class));
+
+        return scenarioPageResponseDTO;
+    }
+
+//     получить фидбек по сценарию (неважно с текстом пользователя или нет)
+//    public PromptResponseDTO sendPrompt(PromptRequestDTO promptRequestDTO) {
+//        return mlFeignClient.sendPrompt(promptRequestDTO);
+//    }
+
+    // получить объяснения сценария
+    @Transactional
+    public PromptResponseDTO explainScenario(UUID scenarioId) {
+        Scenario scenario = scenarioRepository.findScenarioByScenarioId(scenarioId).orElseThrow(
+                () -> new ScenarioNotFoundException("Scenario with id " + scenarioId + " not found")
+        );
+
+       if (scenario.getResponse() != null) {
+           return new PromptResponseDTO(scenario.getResponse());
+       }
+
+       PromptResponseDTO promptResponseDTO =
+               mlFeignClient.explainScenario(new PromptRequestDTO("Текст сценария: " + scenario.getText()));
+
+       scenario.setResponse(promptResponseDTO.getResponse());
+
+       scenarioRepository.save(scenario);
+
+       return promptResponseDTO;
+    }
+
+    // получить объяснения сценария (исходя из ввода пользователя)
+    public PromptResponseDTO getFeedback(UUID scenarioId, PromptRequestDTO promptRequestDTO) {
+        Scenario scenario = scenarioRepository.findScenarioByScenarioId(scenarioId).orElseThrow(
+                () -> new ScenarioNotFoundException("Scenario with id " + scenarioId + " not found")
+        );
+
+        return mlFeignClient.getFeedback(new PromptRequestDTO("Текст сценария: " + scenario.getText() +
+                "\nВвод пользователя: " + promptRequestDTO.getPrompt()));
+    }
+
+    // сгенерировать сценарий
+    @Transactional
+    public ScenarioPageResponseDTO generateScenario(UUID typeID) {
+        GenerateScenarioResponseDTO generateScenarioResponseDTO = mlFeignClient.generateScenario(new PromptRequestDTO(typeService.getTypeTitle(typeID)));
+        return modelMapper.map(scenarioRepository.save(Scenario.builder()
+                .title(generateScenarioResponseDTO.getTitle())
+                .text(generateScenarioResponseDTO.getText())
+                .scam(Boolean.parseBoolean(generateScenarioResponseDTO.getScam()))
+                .response(generateScenarioResponseDTO.getResponse())
+                .build()), ScenarioPageResponseDTO.class);
+    }
+
+    // проверить, что ml сервис жив
+    public HealthResponseDTO healthCheck() {
+        return mlFeignClient.healthCheck();
+    }
+
+    // получить XP за пройденный сценарией
+    @Transactional
+    public GetUserResponseDTO finishScenario(Long userId, UUID scenarioId, Boolean answer) {
+        Scenario scenario = scenarioRepository.findScenarioByScenarioId(scenarioId).orElseThrow(
+                () -> new ScenarioNotFoundException("Scenario with id " + scenarioId + " not found")
+        );
+
+        GetUserResponseDTO getUserResponseDTO;
+
+        if (scenario.getScam().equals(answer)) {
+            getUserResponseDTO = userService.addExperience(userId, true);
+        } else {
+            getUserResponseDTO = userService.addExperience(userId, false);
+        }
+
+        achievementService.checkAndAwardExperienceAchievements(userId);
+
+        return getUserResponseDTO;
+    }
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\service\TypeService.java
+================================================================================
+
+package org.npeonelove.backend.service;
+
+import lombok.RequiredArgsConstructor;
+import org.npeonelove.backend.exception.type.TypeNotFoundException;
+import org.npeonelove.backend.repository.TypeRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+
+@Service
+@Transactional(readOnly = true)
+@RequiredArgsConstructor
+public class TypeService {
+
+    private final TypeRepository typeRepository;
+
+    public String getTypeTitle(UUID typeId) {
+        return typeRepository.findTypeByTypeId(typeId).orElseThrow(
+                () -> new TypeNotFoundException("Type with id " + typeId + " not exists")
+        ).getTitle();
+    }
+
+}
+
+
+================================================================================
+ФАЙЛ: .\java\org\npeonelove\backend\service\UserService.java
+================================================================================
+
+package org.npeonelove.backend.service;
+
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.npeonelove.backend.dto.user.GetJwtUserClaimsResponseDTO;
+import org.npeonelove.backend.dto.user.GetUserResponseDTO;
+import org.npeonelove.backend.dto.user.UpdateUserRequestDTO;
+import org.npeonelove.backend.dto.user.UpdateUserResponseDTO;
+import org.npeonelove.backend.exception.user.UserNotFoundException;
+import org.npeonelove.backend.model.user.User;
+import org.npeonelove.backend.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class UserService {
+    private final UserRepository userRepository;
+    private final ModelMapper modelMapper;
+
+    // получение юзера для фронта
+    public GetUserResponseDTO getUser(Long userId) {
+        return modelMapper.map(getUserById(userId), GetUserResponseDTO.class);
+    }
+
+    // обновление данных юзера
+    @Transactional
+    public UpdateUserResponseDTO updateUser(Long userId,
+                                           UpdateUserRequestDTO updateUserRequestDTO) {
+        User user = getUserById(userId);
+
+        user.setUsername(updateUserRequestDTO.getUsername());
+        user.setAge(updateUserRequestDTO.getAge());
+        user.setMode(updateUserRequestDTO.getMode());
+
+        return modelMapper.map(saveUser(user), UpdateUserResponseDTO.class);
+    }
+
+    // сохранение нового пользователя в системе
+    @Transactional
+    public User saveUser(User user) {
+        return userRepository.save(user);
+    }
+
+    // получение айди и роли для генерации jwt токенов
+    public GetJwtUserClaimsResponseDTO getJwtUserClaims(Long userId) {
+        return modelMapper.map(getUserById(userId), GetJwtUserClaimsResponseDTO.class);
+    }
+
+    // получение юзера (всей сущности) по id
+    public User getUserById(Long userId) {
+        return userRepository.findUserByUserId(userId).orElseThrow(
+                () -> new UserNotFoundException("User with id " + userId.toString() + " not found"));
+    }
+
+    // проверка что юзер существует
+    public Boolean existsUserById(Long userId) {
+        return userRepository.existsById(userId);
+    }
+
+    // добавление XP юзеру
+    @Transactional
+    public GetUserResponseDTO addExperience(Long userId, Boolean success) {
+        User user = getUserById(userId);
+
+        if (success) {
+            user.setExperience(user.getExperience() + 5);
+        } else {
+            user.setExperience(user.getExperience() + 1);
+        }
+
+        return modelMapper.map(userRepository.save(user), GetUserResponseDTO.class);
+    }
+
+}
+
