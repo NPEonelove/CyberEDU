@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '@/config/api';
+
 interface AuthTokens {
   accessToken: string;
   refreshToken: string;
@@ -34,7 +36,7 @@ class AuthService {
   }
 
   async signIn(userId: number): Promise<SignInResponse> {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    const apiUrl = `${API_BASE_URL}/api/v1`;
     const response = await fetch(`${apiUrl}/auth/sign-in`, {
       method: 'POST',
       headers: {
@@ -53,7 +55,7 @@ class AuthService {
   }
 
   async signUp(userId: number): Promise<SignInResponse> {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    const apiUrl = `${API_BASE_URL}/api/v1`;
     const response = await fetch(`${apiUrl}/auth/sign-up`, {
       method: 'POST',
       headers: {
@@ -76,7 +78,7 @@ class AuthService {
       throw new Error('No refresh token available');
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+    const apiUrl = `${API_BASE_URL}/api/v1`;
     const response = await fetch(`${apiUrl}/auth/refresh-access-token`, {
       method: 'POST',
       headers: {

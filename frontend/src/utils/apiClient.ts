@@ -1,4 +1,5 @@
 import { authService } from '@/services/auth';
+import { API_BASE_URL } from '@/config/api';
 
 interface ApiRequestOptions extends RequestInit {
   headers?: Record<string, string>;
@@ -6,7 +7,7 @@ interface ApiRequestOptions extends RequestInit {
 }
 
 class ApiClient {
-  private baseUrl: string = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+  private baseUrl: string = `${API_BASE_URL}/api/v1`;
   private isRefreshing: boolean = false;
   private failedQueue: Array<{
     resolve: (value?: unknown) => void;
