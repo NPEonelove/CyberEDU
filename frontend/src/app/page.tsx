@@ -23,19 +23,6 @@ declare global {
       ready?: () => void;
       expand?: () => void;
     };
-    WebApp?: {
-      initData?: string;
-      initDataUnsafe?: {
-        user?: {
-          id: number;
-          first_name?: string;
-          last_name?: string;
-          username?: string;
-        };
-      };
-      ready?: () => void;
-      expand?: () => void;
-    };
     TelegramWebApp?: any;
   }
 }
@@ -55,11 +42,11 @@ export default function Home() {
           
           console.log(`Attempt ${attempts}: Checking for web app objects...`);
           console.log('MaxWebApp:', window.MaxWebApp);
-          console.log('WebApp:', window.WebApp);
+          console.log('WebApp:', (window as any).WebApp);
           console.log('TelegramWebApp:', window.TelegramWebApp);
           console.log('All window properties:', Object.keys(window).filter(key => key.toLowerCase().includes('app')));
           
-          const webApp = window.MaxWebApp || window.WebApp || window.TelegramWebApp;
+          const webApp = window.MaxWebApp || (window as any).WebApp || window.TelegramWebApp;
           
           if (webApp) {
             try {
