@@ -7,9 +7,9 @@ import logging
 import requests
 import json
 
-transformers_path = r"C:\Users\D_24\Documents\GitHub\CyberEDU\ml\CyberEDU\Lib\site-packages"
-if transformers_path not in sys.path:
-    sys.path.insert(0, transformers_path)
+# transformers_path = r"C:\Users\D_24\Documents\GitHub\CyberEDU\ml\CyberEDU\Lib\site-packages"
+# if transformers_path not in sys.path:
+#     sys.path.insert(0, transformers_path)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -127,107 +127,107 @@ def translate_text(text: str, target_lang: str = "en") -> str:
     
     return result
 
-@app.on_event("startup")
-async def load_model():
-    global tokenizer, model, model_loaded
+# @app.on_event("startup")
+# async def load_model():
+#     global tokenizer, model, model_loaded
     
-    try:
-        logger.info("Загрузка модели...")
+#     try:
+#         logger.info("Загрузка модели...")
         
-        from transformers import AutoTokenizer, AutoModelForCausalLM
-        import torch
+#         from transformers import AutoTokenizer, AutoModelForCausalLM
+#         import torch
         
-        model_name = "openai-community/gpt2"
+#         model_name = "openai-community/gpt2"
         
-        logger.info(f"Загрузка модели {model_name}...")
+#         logger.info(f"Загрузка модели {model_name}...")
         
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
+#         tokenizer = AutoTokenizer.from_pretrained(model_name)
         
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token
+#         if tokenizer.pad_token is None:
+#             tokenizer.pad_token = tokenizer.eos_token
         
-        model = AutoModelForCausalLM.from_pretrained(model_name)
+#         model = AutoModelForCausalLM.from_pretrained(model_name)
         
-        if torch.cuda.is_available():
-            model = model.to('cuda')
-            logger.info("Модель загружена на GPU")
-        else:
-            logger.info("Модель загружена на CPU")
+#         if torch.cuda.is_available():
+#             model = model.to('cuda')
+#             logger.info("Модель загружена на GPU")
+#         else:
+#             logger.info("Модель загружена на CPU")
         
-        model_loaded = True
-        logger.info(f"Модель {model_name} загружена успешно!")
+#         model_loaded = True
+#         logger.info(f"Модель {model_name} загружена успешно!")
         
-    except Exception as e:
-        logger.error(f"Ошибка загрузки модели: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
-        model_loaded = False
+#     except Exception as e:
+#         logger.error(f"Ошибка загрузки модели: {e}")
+#         import traceback
+#         logger.error(traceback.format_exc())
+#         model_loaded = False
 
-@app.post("/api")
-async def handle_prompt(request: PromptRequest):
-    if not model_loaded:
-        raise HTTPException(
-            status_code=500,
-            detail="Модель не загружена. Проверьте логи сервера."
-        )
+# @app.post("/api")
+# async def handle_prompt(request: PromptRequest):
+#     if not model_loaded:
+#         raise HTTPException(
+#             status_code=500,
+#             detail="Модель не загружена. Проверьте логи сервера."
+#         )
     
-    try:
-        import torch
+#     try:
+#         import torch
         
-        original_prompt = request.prompt
-        english_prompt = original_prompt
+#         original_prompt = request.prompt
+#         english_prompt = original_prompt
         
-        russian_chars = any('а' <= char <= 'я' or 'А' <= char <= 'Я' for char in original_prompt)
-        if russian_chars:
-            logger.info(f"Перевод промта с русского на английский: {original_prompt}")
-            english_prompt = translate_text(original_prompt, "en")
-            logger.info(f"Переведенный промт: {english_prompt}")
+#         russian_chars = any('а' <= char <= 'я' or 'А' <= char <= 'Я' for char in original_prompt)
+#         if russian_chars:
+#             logger.info(f"Перевод промта с русского на английский: {original_prompt}")
+#             english_prompt = translate_text(original_prompt, "en")
+#             logger.info(f"Переведенный промт: {english_prompt}")
         
-        inputs = tokenizer.encode(
-            english_prompt + tokenizer.eos_token, 
-            return_tensors="pt"
-        )
+#         inputs = tokenizer.encode(
+#             english_prompt + tokenizer.eos_token, 
+#             return_tensors="pt"
+#         )
         
-        if torch.cuda.is_available():
-            inputs = inputs.to('cuda')
+#         if torch.cuda.is_available():
+#             inputs = inputs.to('cuda')
         
-        with torch.no_grad():
-            outputs = model.generate(
-                inputs,
-                max_new_tokens=request.max_tokens,
-                temperature=request.temperature,
-                do_sample=True if request.temperature > 0 else False,
-                pad_token_id=tokenizer.eos_token_id,
-                num_return_sequences=1
-            )
+#         with torch.no_grad():
+#             outputs = model.generate(
+#                 inputs,
+#                 max_new_tokens=request.max_tokens,
+#                 temperature=request.temperature,
+#                 do_sample=True if request.temperature > 0 else False,
+#                 pad_token_id=tokenizer.eos_token_id,
+#                 num_return_sequences=1
+#             )
         
-        english_response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+#         english_response = tokenizer.decode(outputs[0], skip_special_tokens=True)
         
-        if english_response.startswith(english_prompt):
-            english_response = english_response[len(english_prompt):].strip()
+#         if english_response.startswith(english_prompt):
+#             english_response = english_response[len(english_prompt):].strip()
         
-        english_response = english_response.replace(tokenizer.eos_token, '').strip()
+#         english_response = english_response.replace(tokenizer.eos_token, '').strip()
         
-        # Шаг 3: Перевод ответа обратно на русский
-        final_response = english_response
+#         # Шаг 3: Перевод ответа обратно на русский
+#         final_response = english_response
         
-        if english_response.strip() and russian_chars:
-            logger.info(f"Перевод ответа с английского на русский: {english_response}")
-            final_response = translate_text(english_response, "ru")
-            logger.info(f"Переведенный ответ: {final_response}")
+#         if english_response.strip() and russian_chars:
+#             logger.info(f"Перевод ответа с английского на русский: {english_response}")
+#             final_response = translate_text(english_response, "ru")
+#             logger.info(f"Переведенный ответ: {final_response}")
         
-        return PromptResponse(
-            response=final_response
-        )
+#         return PromptResponse(
+#             response=final_response
+#         )
         
-    except Exception as e:
-        logger.error(f"Ошибка генерации: {str(e)}")
-        import traceback
-        logger.error(traceback.format_exc())
-        raise HTTPException(
-            status_code=500,
-            detail=f"Ошибка генерации: {str(e)}"
-        )
+#     except Exception as e:
+#         logger.error(f"Ошибка генерации: {str(e)}")
+#         import traceback
+#         logger.error(traceback.format_exc())
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Ошибка генерации: {str(e)}"
+#         )
 
 @app.get("/health")
 async def health_check():
@@ -259,50 +259,50 @@ async def test_translation():
     
     return {"translation_tests": results}
 
-@app.get("/test")
-async def test_chat():
-    if not model_loaded:
-        return {"error": "Модель не загружена"}
+# @app.get("/test")
+# async def test_chat():
+#     if not model_loaded:
+#         return {"error": "Модель не загружена"}
     
-    test_prompt = "Привет! Как дела?"
+#     test_prompt = "Привет! Как дела?"
     
-    try:
-        import torch
+#     try:
+#         import torch
         
-        # Перевод на английский
-        english_prompt = translate_text(test_prompt, "en")
-        logger.info(f"Тестовый промт переведен на: {english_prompt}")
+#         # Перевод на английский
+#         english_prompt = translate_text(test_prompt, "en")
+#         logger.info(f"Тестовый промт переведен на: {english_prompt}")
         
-        inputs = tokenizer.encode(english_prompt + tokenizer.eos_token, return_tensors="pt")
-        if torch.cuda.is_available():
-            inputs = inputs.to('cuda')
+#         inputs = tokenizer.encode(english_prompt + tokenizer.eos_token, return_tensors="pt")
+#         if torch.cuda.is_available():
+#             inputs = inputs.to('cuda')
         
-        with torch.no_grad():
-            outputs = model.generate(
-                inputs,
-                max_new_tokens=50,
-                temperature=0.7,
-                do_sample=True,
-                pad_token_id=tokenizer.eos_token_id
-            )
+#         with torch.no_grad():
+#             outputs = model.generate(
+#                 inputs,
+#                 max_new_tokens=50,
+#                 temperature=0.7,
+#                 do_sample=True,
+#                 pad_token_id=tokenizer.eos_token_id
+#             )
         
-        english_response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        if english_response.startswith(english_prompt):
-            english_response = english_response[len(english_prompt):].strip()
+#         english_response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+#         if english_response.startswith(english_prompt):
+#             english_response = english_response[len(english_prompt):].strip()
         
-        # Перевод обратно на русский
-        russian_response = translate_text(english_response, "ru")
+#         # Перевод обратно на русский
+#         russian_response = translate_text(english_response, "ru")
         
-        return {
-            "test_prompt": test_prompt,
-            "english_prompt": english_prompt,
-            "english_response": english_response,
-            "russian_response": russian_response,
-            "status": "success"
-        }
+#         return {
+#             "test_prompt": test_prompt,
+#             "english_prompt": english_prompt,
+#             "english_response": english_response,
+#             "russian_response": russian_response,
+#             "status": "success"
+#         }
         
-    except Exception as e:
-        return {"error": str(e)}
+#     except Exception as e:
+#         return {"error": str(e)}
 
 @app.post("/feedback")
 async def get_feedback(request: PromptRequest):
@@ -406,10 +406,6 @@ async def generate_scenario(request: PromptRequest):
             Откройте «Параметры Windows» (Пуск -> Шестеренка) -> «Обновление и безопасность» -> «Безопасность Windows» -> «Защита от вирусов и угроз». Запустите «Быструю проверку»."""
         )
     
-
-    
-
-
 
 if __name__ == "__main__":
     import uvicorn
