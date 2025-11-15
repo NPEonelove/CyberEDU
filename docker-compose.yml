@@ -38,7 +38,7 @@ services:
   fastapi-app:
     build:
       context: ./ml
-    container_name: resume-analyst-api
+    container_name: cyberedu-scenario-api
     ports:
       - "8000:8000"
     volumes:
