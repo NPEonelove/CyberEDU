@@ -1,5 +1,9 @@
 # CyberEDU
-# CyberEDU Backend
+# Frontend
+
+Ссылка на миниприложение: https://cyber-l1b9p8ssv-ex1s9s-projects.vercel.app/
+
+# Backend
 
 Backend сервис для образовательной платформы по кибербезопасности, предоставляющий REST API для работы с пользователями, сценариями и достижениями.
 
