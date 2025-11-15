@@ -42,6 +42,7 @@ cd cyberedu-backend
 
 2. Запустите приложение:
 ```bash
+docker-compose build
 docker-compose up -d
 ```
 
